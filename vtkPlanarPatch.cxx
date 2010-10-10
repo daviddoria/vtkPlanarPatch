@@ -50,7 +50,7 @@ int vtkPlanarPatch::RequestData(
   vtkMath::Normalize(n);
   this->Plane->SetNormal(n);
 
-  // Project points onto a random plane
+  // Project points onto the plane
   vtkSmartPointer<vtkPoints> projectedPoints =
     vtkSmartPointer<vtkPoints>::New();
 
