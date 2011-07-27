@@ -19,6 +19,11 @@
 
 vtkStandardNewMacro(vtkPlanarPatch);
 
+vtkPlanarPatch::vtkPlanarPatch()
+{
+  this->FlatOutput = true;
+}
+
 int vtkPlanarPatch::FillInputPortInformation( int port, vtkInformation* info )
 {
   if (port == 0)
@@ -42,7 +47,7 @@ int vtkPlanarPatch::RequestData(
 
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
   vtkPolyData *output = vtkPolyData::SafeDownCast(
-		  outInfo->Get(vtkDataObject::DATA_OBJECT()));
+               outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
   // Normalize the plane normal
   double n[3];
@@ -114,7 +119,7 @@ int vtkPlanarPatch::RequestData(
   landmarkTransform->SetModeToRigidBody();
   landmarkTransform->Update();
 
-  // Add the points points to a polydata object (required for Delaunay)
+  // Add the projected points to a polydata object (required for Delaunay)
   vtkSmartPointer<vtkPolyData> polydata =
     vtkSmartPointer<vtkPolyData>::New();
   polydata->SetPoints(projectedPoints);
@@ -125,7 +130,16 @@ int vtkPlanarPatch::RequestData(
   delaunay->SetInput(polydata);
   delaunay->Update();
 
-  output->ShallowCopy(delaunay->GetOutput());
+  // If FlatOutput is specified, the output is actually a region of a plane
+  if(this->FlatOutput)
+    {
+    output->ShallowCopy(delaunay->GetOutput());
+    }
+  else // If FlatOutput is false, the output is a potentially non-planar mesh on the 3d points
+    {
+    output->ShallowCopy(input);
+    output->SetPolys(delaunay->GetOutput()->GetPolys());
+    }
 
   return 1;
 }

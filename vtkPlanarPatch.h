@@ -34,13 +34,17 @@ class vtkPlane;
 class vtkPlanarPatch : public vtkPolyDataAlgorithm
 {
   public:
+
     static vtkPlanarPatch *New();
     vtkTypeMacro(vtkPlanarPatch, vtkPolyDataAlgorithm);
 
     void SetPlane(vtkPlane* plane) {this->Plane = plane;}
 
+    vtkSetMacro(FlatOutput, bool);
+    vtkGetMacro(FlatOutput, bool);
+    
   protected:
-    vtkPlanarPatch() {};
+    vtkPlanarPatch();
     ~vtkPlanarPatch() {};
 
     int FillInputPortInformation( int port, vtkInformation* info );
@@ -48,6 +52,7 @@ class vtkPlanarPatch : public vtkPolyDataAlgorithm
 
   private:
     vtkPlane* Plane;
+    bool FlatOutput;
 };
 
 #endif

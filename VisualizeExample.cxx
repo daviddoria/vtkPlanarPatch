@@ -31,7 +31,6 @@ int main(int, char *[])
 
   vtkSmartPointer<vtkPoints> points =
     vtkSmartPointer<vtkPoints>::New();
-  // Only keep a subset of the points on the plane
   for(vtkIdType i = 0; i < planeSource->GetOutput()->GetNumberOfPoints(); i++)
     {
     double rand = vtkMath::Random(0,1);
@@ -39,9 +38,6 @@ int main(int, char *[])
       {
       double p[3];
       planeSource->GetOutput()->GetPoint(i,p);
-      p[0] += vtkMath::Random(-.1,.1);
-      p[1] += vtkMath::Random(-.1,.1);
-      p[2] += vtkMath::Random(-.1,.1);
       points->InsertNextPoint(p);
       }
     }
@@ -72,16 +68,48 @@ int main(int, char *[])
   vtkSmartPointer<vtkPlanarPatch> planarPatch =
       vtkSmartPointer<vtkPlanarPatch>::New();
   planarPatch->SetPlane(plane);
-  planarPatch->SetFlatOutput(false);
   planarPatch->SetInputConnection(pointsPolyData->GetProducerPort());
   planarPatch->Update();
 
-  // Write the output
-  vtkSmartPointer<vtkXMLPolyDataWriter> writer =
-    vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-  writer->SetFileName("output.vtp");
-  writer->SetInputConnection(planarPatch->GetOutputPort());
-  writer->Write();
-  
+  // Create a mapper and actor for the input points
+  vtkSmartPointer<vtkPolyDataMapper> pointMapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  pointMapper->SetInputConnection(glyphFilter->GetOutputPort());
+
+  vtkSmartPointer<vtkActor> pointActor =
+    vtkSmartPointer<vtkActor>::New();
+  pointActor->SetMapper(pointMapper);
+  pointActor->GetProperty()->SetColor(1,0,0);
+  pointActor->GetProperty()->SetPointSize(3);
+
+  // Create a mapper and actor for the planar patch
+  vtkSmartPointer<vtkPolyDataMapper> patchMapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  patchMapper->SetInputConnection(planarPatch->GetOutputPort());
+
+  vtkSmartPointer<vtkActor> patchActor =
+    vtkSmartPointer<vtkActor>::New();
+  patchActor->SetMapper(patchMapper);
+  patchActor->GetProperty()->SetEdgeColor(0,0,1);
+  patchActor->GetProperty()->EdgeVisibilityOn();
+
+  // Create a renderer, render window, and interactor
+  vtkSmartPointer<vtkRenderer> renderer =
+    vtkSmartPointer<vtkRenderer>::New();
+  vtkSmartPointer<vtkRenderWindow> renderWindow =
+    vtkSmartPointer<vtkRenderWindow>::New();
+  renderWindow->AddRenderer(renderer);
+  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+    vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  renderWindowInteractor->SetRenderWindow(renderWindow);
+
+  // Add the actor to the scene
+  renderer->AddActor(pointActor);
+  renderer->AddActor(patchActor);
+  renderer->SetBackground(.3, .6, .3); // Background color green
+
+  // Render and interact
+  renderWindow->Render();
+  renderWindowInteractor->Start();
   return EXIT_SUCCESS;
 }
